@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Страница авторизации</title>
+</head>
+<body>
+
+<form th:method="POST" th:action="@{/login}">
+    <div>
+        <label for="username">Имя пользователя: </label>
+        <input type="text" id="username" name="username" required/>
+    </div>
+    <div>
+        <label for="password">Пароль: </label>
+        <input type="password" id="password" name="password" required/>
+    </div>
+
+    <div th:if="${param.error}" class="error">
+        <p>Неправильное имя пользователя или пароль</p>
+    </div>
+
+    <div>
+        <button type="submit">Войти</button>
+    </div>
+    <br/>
+    <h4><a href="/registration">Зарегистрироваться</a></h4>
+</form>
+
+</body>
+</html>
