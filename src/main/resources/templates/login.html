@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Страница авторизации</title>
+    <meta charset="UTF-8"/>
+    <title>Авторизация</title>
 </head>
 <body>
-
+<h1>Вход</h1>
 <form th:method="POST" th:action="@{/login}">
     <div>
         <label for="username">Имя пользователя: </label>
@@ -15,17 +15,16 @@
         <label for="password">Пароль: </label>
         <input type="password" id="password" name="password" required/>
     </div>
-
     <div th:if="${param.error}" class="error">
         <p>Неправильное имя пользователя или пароль</p>
     </div>
-
     <div>
         <button type="submit">Войти</button>
     </div>
     <br/>
     <h4><a href="/registration">Зарегистрироваться</a></h4>
+    <br/>
+    <h4><a href="/logout">Выйти</a></h4>
 </form>
-
 </body>
 </html>

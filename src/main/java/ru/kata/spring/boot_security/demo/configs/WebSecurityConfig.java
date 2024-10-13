@@ -18,8 +18,6 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    //    private final SuccessUserHandler successUserHandler;
-
     @Autowired
     @Lazy
     UserService userService;
@@ -28,63 +26,31 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public WebSecurityConfig(BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
-
-    //    public WebSecurityConfig(SuccessUserHandler successUserHandler) {
-    //        this.successUserHandler = successUserHandler;
-    //    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/registration").not().fullyAuthenticated()
-                .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers("/news").hasRole("USER")
-                .antMatchers("/", "/resources/**").permitAll()
+                .antMatchers("/registration").permitAll()
+                .antMatchers("/admin").hasRole("ADMIN")
+                .antMatchers("/user").hasAnyRole("USER", "ADMIN")
+                .antMatchers("/").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
                 .loginPage("/login")
-                .defaultSuccessUrl("/")
+                .successHandler(new SuccessUserHandler())
                 .permitAll()
                 .and()
                 .logout()
-                .permitAll()
-                .logoutSuccessUrl("/");
+                .logoutSuccessUrl("/") // Возврат на главную после выхода
+                .permitAll();
     }
 
     @Autowired
     protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
     }
-
-//    @Override
-//    protected void configure(HttpSecurity http) throws Exception {
-//        http
-//                .authorizeRequests()
-//                .antMatchers("/", "/index").permitAll()
-//                .anyRequest().authenticated()
-//                .and()
-//                .formLogin().successHandler(successUserHandler)
-//                .permitAll()
-//                .and()
-//                .logout()
-//                .permitAll();
-//    }
-
-    // аутентификация inMemory
-//    @Bean
-//    @Override
-//    public UserDetailsService userDetailsService() {
-//        UserDetails user =
-//                User.withDefaultPasswordEncoder()
-//                        .username("user")
-//                        .password("user")
-//                        .roles("USER")
-//                        .build();
-//
-//        return new InMemoryUserDetailsManager(user);
-//    }
 }
