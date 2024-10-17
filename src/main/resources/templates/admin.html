@@ -2,45 +2,277 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Страница администратора</title>
+    <title>Admin Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding-top: 60px;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #343a40;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 280px;
+            height: calc(100% - 60px);
+            background-color: white;
+            color: #000;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+
+        .content {
+            margin-left: 320px;
+            padding: 15px;
+        }
+
+        .table {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-<h1>Управление пользователями</h1>
-<br>
-<div>
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Имя пользователя</th>
-            <th>Пароль</th>
-            <th>Роли</th>
-            <th>Действия</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="user : ${allUsers}">
-            <td th:text="${user.id}"></td>
-            <td th:text="${user.username}"></td>
-            <td th:text="${user.password}"></td>
-            <td>
-                <span th:each="role : ${user.roles}" th:text="${role.name}"></span>
-            </td>
-            <td>
-                <form action="#" th:action="@{/admin}" method="post" style="display:inline;">
-                    <input type="hidden" name="userId" th:value="${user.id}"/>
-                    <input type="hidden" name="action" value="delete"/>
-                    <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?');">
-                        Удалить
-                    </button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<div class="navbar">
+    <div>
+        <span th:text="${currentUser.username}" style="font-weight: bold;"></span>
+        <span> with roles: </span>
+        <span th:each="role, iterStat : ${currentUser.roles}" th:text="${role.name}"
+              th:if="${iterStat.index > 0}">, </span>
+        <span th:text="${currentUser.roles[0].name}" th:if="${currentUser.roles.size() > 0}"></span>
+    </div>
+    <div>
+        <a href="/logout" class="text-white">Logout</a>
+    </div>
 </div>
-<h4><a href="/">На главную</a></h4>
-<br/>
-<h4><a href="/logout">Выйти</a></h4>
+
+<div class="sidebar">
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a href="/admin" class="nav-link active">Admin</a>
+        </li>
+        <li class="nav-item">
+            <a href="/user" class="nav-link">User</a>
+        </li>
+    </ul>
+</div>
+
+<div class="content">
+    <div class="tabs">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#users-table">Users Table</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#new-user">New User</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content">
+        <div id="users-table" class="tab-pane fade show active">
+            <h1>All users</h1>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя пользователя</th>
+                    <th>Пароль</th>
+                    <th>Роли</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${allUsers}">
+                    <td th:text="${user.id}"></td>
+                    <td th:text="${user.username}"></td>
+                    <td th:text="${user.password}"></td>
+                    <td>
+                        <span th:each="role : ${user.roles}" th:text="${role.name}"></span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#editModal"
+                                th:data-id="${user.id}"
+                                th:data-username="${#strings.escapeJavaScript(user.username)}"
+                                th:data-password="${#strings.escapeJavaScript(user.password)}"
+                                th:data-role="${user.roles[0].name}">Edit
+                        </button>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                th:data-id="${user.id}"
+                                th:data-username="${user.username}"
+                                th:data-password="${user.password}"
+                                th:data-role="${user.roles[0].name}">Delete
+                        </button>
+                    </td>
+
+                </tr>
+                </tbody>
+
+
+            </table>
+        </div>
+
+        <div id="new-user" class="tab-pane fade">
+            <h1>Add new user</h1>
+            <form th:action="@{/admin/addUser}" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                    <div style="color: red" th:if="${usernameError != null}" th:text="${usernameError}"></div>
+
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Confirm password:</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    <div style="color: red" th:if="${passwordError != null}" th:text="${passwordError}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role:</label>
+                    <select id="role" name="role" class="form-control" required>
+                        <option th:each="role : ${roles}" th:value="${role.name}" th:text="${role.name}"></option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add User</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/editUser" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-id" name="id">
+                    <div class="mb-3">
+                        <label for="edit-username" class="form-label">Username:</label>
+                        <input type="text" class="form-control" id="edit-username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-password" class="form-label">Password:</label>
+                        <input type="password" class="form-control" id="edit-password" name="password">
+                        <small class="form-text text-muted">Оставьте пустым, если не хотите изменять пароль.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-role" class="form-label">Role:</label>
+                        <select id="edit-role" name="role" class="form-select">
+                            <option th:each="role : ${roles}" th:value="${role.name}" th:text="${role.name}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Edit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the user:</p>
+                <ul>
+                    <li>ID: <span id="delete-id"></span></li>
+                    <li>Username: <span id="delete-username"></span></li>
+                    <li>Password: <span id="delete-password"></span></li>
+                    <li>Roles: <span id="delete-roles"></span></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <form action="/admin/deleteUser" method="post" id="delete-form">
+                    <input type="hidden" name="userId" id="delete-userId">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.querySelector('form[action="/admin/editUser"]').addEventListener('submit', function (event) {
+        const passwordField = document.getElementById('edit-password');
+
+        if (!passwordField.value.trim()) {
+            passwordField.removeAttribute('name');
+        }
+    });
+
+    document.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const modalId = button.getAttribute('data-bs-target');
+
+        if (modalId === '#editModal') {
+            const id = button.getAttribute('data-id');
+            const username = button.getAttribute('data-username');
+            const role = button.getAttribute('data-role');
+
+            const modal = document.getElementById('editModal');
+            modal.querySelector('#edit-id').value = id;
+            modal.querySelector('#edit-username').value = username;
+            modal.querySelector('#edit-password').value = '';
+            modal.querySelector('#edit-role').value = role;
+
+        } else if (modalId === '#deleteModal') {
+            const id = button.getAttribute('data-id');
+            const username = button.getAttribute('data-username');
+            const password = button.getAttribute('data-password');
+            const roles = button.getAttribute('data-role');
+
+            const modal = document.getElementById('deleteModal');
+            modal.querySelector('#delete-id').textContent = id;
+            modal.querySelector('#delete-username').textContent = username;
+            modal.querySelector('#delete-password').textContent = password;
+            modal.querySelector('#delete-roles').textContent = roles;
+
+            const rolesElement = modal.querySelector('#delete-roles');
+            rolesElement.textContent = roles;
+            modal.querySelector('#delete-userId').value = id;
+        }
+    });
+
+</script>
 </body>
 </html>

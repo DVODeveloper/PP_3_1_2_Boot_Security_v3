@@ -1,6 +1,7 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,26 +15,22 @@ import ru.kata.spring.boot_security.demo.repository.UserRepository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService implements UserDetailsService {
 
-    @PersistenceContext
-    private EntityManager em;
+    private final UserRepository userRepository;
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    RoleRepository roleRepository;
-
+    private final RoleRepository roleRepository;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
@@ -49,8 +46,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findUserById(Long userId) {
-        Optional<User> userFromDb = userRepository.findById(userId);
-        return userFromDb.orElse(new User());
+        return userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public User findUserByUsername(String username) {
@@ -62,28 +58,46 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean saveUser(User user) {
-        User usrFromDb = userRepository.findByUsername(user.getUsername());
-
-        if (usrFromDb != null) {
-            return false;
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            return false;  // Пользователь уже существует
         }
-
-        user.setRoles(Collections.singleton(new Role(1L, "ROLE_USER")));
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));  // Шифруем пароль
         userRepository.save(user);
         return true;
     }
 
+
     public boolean deleteUser(Long userId) {
-        if (userRepository.findById(userId).isPresent()) {
+        try {
             userRepository.deleteById(userId);
             return true;
+        } catch (EmptyResultDataAccessException e) {
+            System.err.println("Error deleting user with ID: " + userId);
+            return false;
         }
-        return false;
     }
 
     public List<User> usergtList(Long idMin) {
-        return em.createQuery("SELECT u FROM User u WHERE u.id >: paramId", User.class)
-                .setParameter("paramId", idMin).getResultList();
+        return userRepository.findAll();
     }
+
+    public void updateUser(User user) {
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword())); // Шифрование пароля
+        }
+        userRepository.save(user);
+    }
+
+    public void setUserRole(User user, Role role) {
+        if (role != null) {
+            user.setRoles(new HashSet<>(Collections.singletonList(role)));
+        } else {
+            throw new IllegalArgumentException("Role not found");
+        }
+    }
+
+    public String encodePassword(String password) {
+        return bCryptPasswordEncoder.encode(password);
+    }
+
 }
