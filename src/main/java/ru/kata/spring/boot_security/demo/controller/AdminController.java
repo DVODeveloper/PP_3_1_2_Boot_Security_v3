@@ -12,8 +12,12 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 @Controller
 public class AdminController {
 
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public AdminController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/admin")
     public String userList(Model model) {
@@ -33,7 +37,7 @@ public class AdminController {
 
     @GetMapping("/admin/gt/{userId}")
     public String gtUser(@PathVariable("userId") Long userId, Model model) {
-        model.addAttribute("allUsers", userService.usergtList(userId));
+        model.addAttribute("allUsers", userService.usergtList());
         return "admin";
     }
 }

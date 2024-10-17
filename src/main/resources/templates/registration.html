@@ -12,6 +12,7 @@
             <label for="username">Введите имя пользователя</label>
             <input type="text" th:field="*{username}" required id="username"/>
             <div style="color: red" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Ошибка имени пользователя</div>
+            <div style="color: red" th:if="${usernameError}">[[${usernameError}]]</div>
         </div>
         <br/>
         <div>
@@ -23,6 +24,7 @@
             <label for="passwordConfirm">Подтвердите пароль</label>
             <input type="password" th:field="*{passwordConfirm}" id="passwordConfirm"/>
             <div style="color: red" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}">Ошибка подтверждения пароля</div>
+            <div style="color: red" th:if="${passwordError}">[[${passwordError}]]</div>
         </div>
         <input type="submit" value="Зарегистрироваться"/>
         <a href="/index">На главную</a>

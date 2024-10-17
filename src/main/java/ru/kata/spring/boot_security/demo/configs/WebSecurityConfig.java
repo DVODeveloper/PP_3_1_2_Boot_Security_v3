@@ -18,14 +18,14 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    @Autowired
-    @Lazy
-    UserService userService;
 
-    BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final UserService userService;
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    public WebSecurityConfig(BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public WebSecurityConfig(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userService = userService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
