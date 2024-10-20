@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.kata.spring.boot_security.demo.entity.Role;
 import ru.kata.spring.boot_security.demo.entity.User;
+import ru.kata.spring.boot_security.demo.exception_handling.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
 
@@ -17,6 +18,7 @@ import javax.persistence.PersistenceContext;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -46,7 +48,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findUserById(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with ID = " + userId));
     }
 
     public User findUserByUsername(String username) {
@@ -62,6 +64,18 @@ public class UserService implements UserDetailsService {
             return false;  // Пользователь уже существует
         }
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));  // Шифруем пароль
+
+        Set<Role> userRoles = new HashSet<>();
+        for (Role role: user.getRoles()) {
+            Role userRole = roleRepository.findByName(role.getName());
+            if (userRole != null) {
+                userRoles.add(userRole);
+            } else {
+                throw new IllegalArgumentException("Role " + role.getName() + " not found");
+            }
+        }
+        user.setRoles(userRoles);
+
         userRepository.save(user);
         return true;
     }
