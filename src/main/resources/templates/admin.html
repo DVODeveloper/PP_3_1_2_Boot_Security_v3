@@ -15,7 +15,8 @@
             <th>Имя пользователя</th>
             <th>Пароль</th>
             <th>Роли</th>
-            <th>Действия</th>
+            <th>Удалить</th>
+            <th>Редактировать</th>
         </tr>
         </thead>
         <tbody>
@@ -35,10 +36,15 @@
                     </button>
                 </form>
             </td>
+            <td>
+                <a th:href="@{/admin/edit/{id}(id=${user.id})}">Редактировать</a>
+            </td>
         </tr>
         </tbody>
     </table>
 </div>
+<h4><a href="/registration">Зарегистрировать нового пользователя</a></h4>
+<br/>
 <h4><a href="/">На главную</a></h4>
 <br/>
 <h4><a href="/logout">Выйти</a></h4>

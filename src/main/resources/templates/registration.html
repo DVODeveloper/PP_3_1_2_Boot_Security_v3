@@ -2,35 +2,46 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Регистрация</title>
+    <title>Регистрация пользователя</title>
 </head>
 <body>
-<h1>Регистрация</h1>
-<div>
-    <form th:method="POST" th:action="@{/registration}" th:object="${userForm}">
-        <div>
-            <label for="username">Введите имя пользователя</label>
-            <input type="text" th:field="*{username}" required id="username"/>
-            <div style="color: red" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Ошибка имени пользователя</div>
-            <div style="color: red" th:if="${usernameError}">[[${usernameError}]]</div>
+<h1>Регистрация нового пользователя</h1>
+<form th:method="POST" th:action="@{/registration}" th:object="${userForm}">
+    <div>
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" th:field="*{username}" required/>
+        <div style="color: red" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Ошибка имени
+            пользователя
         </div>
-        <br/>
-        <div>
-            <label for="password">Введите пароль</label>
-            <input type="password" th:field="*{password}" id="password"/>
-            <div style="color: red" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Ошибка пароля</div>
+        <div style="color: red" th:if="${usernameError}">[[${usernameError}]]</div>
+    </div>
+    <br/>
+
+    <div>
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" th:field="*{password}" required/>
+        <div style="color: red" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Ошибка пароля</div>
+    </div>
+    <br/>
+
+    <div>
+        <label for="passwordConfirm">Подтвердите пароль</label>
+        <input type="password" th:field="*{passwordConfirm}" id="passwordConfirm"/>
+        <div style="color: red" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}">Ошибка
+            подтверждения пароля
         </div>
-        <div>
-            <label for="passwordConfirm">Подтвердите пароль</label>
-            <input type="password" th:field="*{passwordConfirm}" id="passwordConfirm"/>
-            <div style="color: red" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}">Ошибка подтверждения пароля</div>
-            <div style="color: red" th:if="${passwordError}">[[${passwordError}]]</div>
-        </div>
-        <input type="submit" value="Зарегистрироваться"/>
-        <a href="/index">На главную</a>
-        <br/>
-        <h4><a href="/logout">Выйти</a></h4>
-    </form>
-</div>
+        <div style="color: red" th:if="${passwordError}">[[${passwordError}]]</div>
+    </div>
+
+    <div>
+        <label for="roles">Роли:</label>
+        <select id="roles" th:field="*{roles}" multiple="multiple">
+            <option th:each="role : ${allRoles}" th:value="${role.id}" th:text="${role.name}"></option>
+        </select>
+    </div>
+    <br/>
+
+    <button type="submit">Зарегистрировать</button>
+</form>
 </body>
 </html>

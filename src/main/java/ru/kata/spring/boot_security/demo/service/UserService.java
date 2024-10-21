@@ -11,9 +11,7 @@ import ru.kata.spring.boot_security.demo.entity.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -61,21 +59,44 @@ public class UserService implements UserDetailsService {
             return false;
         }
 
-        user.setRoles(Collections.singleton(new Role(1L, "ROLE_USER")));
+        Set<Role> roles = new HashSet<>();
+        for (Role roleId : user.getRoles()) {
+            Role dbRole = roleRepository.findById(roleId.getId()).orElse(null);
+            if (dbRole != null) {
+                roles.add(dbRole);
+            }
+        }
+        user.setRoles(roles);
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
     }
 
-    public boolean deleteUser(Long userId) {
-        if (userRepository.findById(userId).isPresent()) {
-            userRepository.deleteById(userId);
-            return true;
+    public void updateUser(User userForm) {
+        Set<Role> roles = new HashSet<>();
+        for (Role role : userForm.getRoles()) {
+            Role dbRole = roleRepository.findById(role.getId()).orElse(null);
+            if (dbRole != null) {
+                roles.add(dbRole);
+            }
         }
-        return false;
+        userForm.setRoles(roles);
+        userRepository.save(userForm);
     }
+
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.getRoles().clear();
+        userRepository.save(user);
+        userRepository.delete(user);
+    }
+
 
     public List<User> usergtList() {
         return userRepository.findAll();
+    }
+
+    public String encodePassword(String password) {
+        return bCryptPasswordEncoder.encode(password);
     }
 }
