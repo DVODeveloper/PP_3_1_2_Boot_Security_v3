@@ -3,6 +3,7 @@ package ru.kata.spring.boot_security.demo.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.entity.Role;
 import ru.kata.spring.boot_security.demo.entity.User;
@@ -18,9 +19,9 @@ import java.util.Set;
 public class AdminController {
 
     private final UserService userService;
-
     private final RoleRepository roleRepository;
 
+    @Autowired
     public AdminController(UserService userService, RoleRepository roleRepository) {
         this.userService = userService;
         this.roleRepository = roleRepository;
@@ -59,35 +60,42 @@ public class AdminController {
     }
 
     @PostMapping("/admin/editUser")
-    public String editUser(@RequestParam("id") Long id,
-                           @RequestParam("username") String username,
-                           @RequestParam(value = "password", required = false) String password,
-                           @RequestParam("role") String role) {
+    public String editUser(@ModelAttribute("user") User userForm, BindingResult bindingResult, Model model) {
 
-        User user = userService.findUserById(id);
-        user.setUsername(username);
-
-        if (password != null && !password.trim().isEmpty()) {
-            user.setPassword(userService.encodePassword(password));
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("allRoles", roleRepository.findAll());
+            return "admin";
         }
 
-        Set<Role> roles = new HashSet<>();
-        Role userRole = roleRepository.findByName(role);
-        if (userRole != null) {
-            roles.add(userRole);
-        } else {
-            throw new IllegalArgumentException("Role not found: " + role);
+        User user = userService.findUserById(userForm.getId());
+        user.setUsername(userForm.getUsername());
+
+        if (userForm.getPassword() != null && !userForm.getPassword().trim().isEmpty()) {
+            if (!userForm.getPassword().equals(user.getPassword())) {
+                user.setPassword(userService.encodePassword(userForm.getPassword()));
+
+                System.out.println("Пароль user: " + user.getPassword());
+                System.out.println("Пароль userForm: " + userForm.getPassword());
+            }
         }
-        user.setRoles(roles);
+
+        if (userForm.getRoles() != null && !userForm.getRoles().isEmpty()) {
+            Set<Role> roles = new HashSet<>();
+            for (Role role : userForm.getRoles()) {
+                Role dbRole = roleRepository.findById(role.getId()).orElse(null);
+                if (dbRole != null) {
+                    roles.add(dbRole);
+                } else {
+                    throw new RuntimeException("Role not found");
+                }
+            }
+            user.setRoles(roles);
+        }
 
         userService.updateUser(user);
 
         return "redirect:/admin";
     }
-
-
-
-
 
     @PostMapping("/admin/addUser")
     public String addUser(@RequestParam String username,
@@ -96,22 +104,21 @@ public class AdminController {
                           @RequestParam String role,
                           Model model,
                           Principal principal) {
-        // Проверка совпадения паролей
         if (!password.equals(confirmPassword)) {
             model.addAttribute("passwordError", "Пароли не совпадают");
             model.addAttribute("activeTab", "newUser");
-            return getAdminPage(model, principal);  // Возврат на страницу админа с ошибкой
+            return getAdminPage(model, principal);
         }
 
         if (userService.findUserByUsername(username) != null) {
             model.addAttribute("usernameError", "Пользователь с таким именем уже существует");
             model.addAttribute("activeTab", "newUser");
-            return getAdminPage(model, principal);  // Возврат на страницу с ошибкой
+            return getAdminPage(model, principal);
         }
 
         User newUser = new User();
         newUser.setUsername(username);
-        newUser.setPassword(password);  // Пароль будет зашифрован в сервисе
+        newUser.setPassword(password);
 
         Role userRole = roleRepository.findByName(role);
         if (userRole == null) {
@@ -122,10 +129,10 @@ public class AdminController {
 
         if (!userService.saveUser(newUser)) {
             model.addAttribute("usernameError", "User with this username already exists");
-            return getAdminPage(model, principal);  // Возврат на страницу с ошибкой
+            return getAdminPage(model, principal);
         }
 
-        return "redirect:/admin";  // Перенаправление на страницу админа после успешного добавления
+        return "redirect:/admin";
     }
 
 

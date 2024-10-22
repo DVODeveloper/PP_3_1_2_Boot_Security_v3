@@ -176,27 +176,32 @@
             <form action="/admin/editUser" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit-id" name="id">
+
                     <div class="mb-3">
                         <label for="edit-username" class="form-label">Username:</label>
                         <input type="text" class="form-control" id="edit-username" name="username" required>
                     </div>
+
                     <div class="mb-3">
                         <label for="edit-password" class="form-label">Password:</label>
                         <input type="password" class="form-control" id="edit-password" name="password">
                         <small class="form-text text-muted">Оставьте пустым, если не хотите изменять пароль.</small>
                     </div>
+
                     <div class="mb-3">
                         <label for="edit-role" class="form-label">Role:</label>
-                        <select id="edit-role" name="role" class="form-select">
-                            <option th:each="role : ${roles}" th:value="${role.name}" th:text="${role.name}"></option>
+                        <select id="edit-role" name="roles" class="form-select" multiple>
+                            <option th:each="role : ${roles}" th:value="${role.id}" th:text="${role.name}"></option>
                         </select>
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Edit</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
@@ -232,13 +237,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.querySelector('form[action="/admin/editUser"]').addEventListener('submit', function (event) {
-        const passwordField = document.getElementById('edit-password');
-
-        if (!passwordField.value.trim()) {
-            passwordField.removeAttribute('name');
-        }
-    });
 
     document.addEventListener('show.bs.modal', function (event) {
         const button = event.relatedTarget;
@@ -249,13 +247,18 @@
             const username = button.getAttribute('data-username');
             const role = button.getAttribute('data-role');
 
+            // Модальное окно редактирования
             const modal = document.getElementById('editModal');
+            const passwordField = modal.querySelector('#edit-password');
+
+            // Устанавливаем значения в модальное окно
             modal.querySelector('#edit-id').value = id;
             modal.querySelector('#edit-username').value = username;
-            modal.querySelector('#edit-password').value = '';
+            passwordField.value = ''; // Очищаем поле пароля
             modal.querySelector('#edit-role').value = role;
 
         } else if (modalId === '#deleteModal') {
+            // Модальное окно удаления
             const id = button.getAttribute('data-id');
             const username = button.getAttribute('data-username');
             const password = button.getAttribute('data-password');
@@ -267,11 +270,19 @@
             modal.querySelector('#delete-password').textContent = password;
             modal.querySelector('#delete-roles').textContent = roles;
 
-            const rolesElement = modal.querySelector('#delete-roles');
-            rolesElement.textContent = roles;
             modal.querySelector('#delete-userId').value = id;
         }
     });
+
+    // Логика формы для удаления пароля, если поле пустое
+    document.querySelector('form[action="/admin/editUser"]').addEventListener('submit', function (event) {
+        const passwordField = document.getElementById('edit-password');
+
+        if (!passwordField.value.trim()) {
+            passwordField.removeAttribute('name'); // Убираем поле пароля, если оно пустое
+        }
+    });
+
 
 </script>
 </body>

@@ -1,7 +1,6 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,19 +11,13 @@ import ru.kata.spring.boot_security.demo.entity.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
     private final RoleRepository roleRepository;
-
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
@@ -46,7 +39,8 @@ public class UserService implements UserDetailsService {
     }
 
     public User findUserById(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Optional<User> userFromDb = userRepository.findById(userId);
+        return userFromDb.orElse(new User());
     }
 
     public User findUserByUsername(String username) {
@@ -58,34 +52,52 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean saveUser(User user) {
-        if (userRepository.findByUsername(user.getUsername()) != null) {
-            return false;  // Пользователь уже существует
+        User userFromDb = userRepository.findByUsername(user.getUsername());
+
+        if (userFromDb != null) {
+            return false;
         }
+
+        Set<Role> roles = new HashSet<>();
+        for (Role roleId : user.getRoles()) {
+            Role dbRole = roleRepository.findById(roleId.getId()).orElse(null);
+            if (dbRole != null) {
+                roles.add(dbRole);
+            }
+        }
+        user.setRoles(roles);
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));  // Шифруем пароль
         userRepository.save(user);
+
         return true;
     }
 
 
-    public boolean deleteUser(Long userId) {
-        try {
-            userRepository.deleteById(userId);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            System.err.println("Error deleting user with ID: " + userId);
-            return false;
-        }
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.getRoles().clear();
+        userRepository.save(user);
+        userRepository.delete(user);
     }
 
     public List<User> usergtList(Long idMin) {
         return userRepository.findAll();
     }
 
-    public void updateUser(User user) {
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword())); // Шифрование пароля
+    public void updateUser(User userForm) {
+        Set<Role> roles = new HashSet<>();
+        for (Role role : userForm.getRoles()) {
+            Role dbRole = roleRepository.findById(role.getId()).orElse(null);
+            if (dbRole != null) {
+                roles.add(dbRole);
+            }
         }
-        userRepository.save(user);
+
+        if (userForm.getPassword() != null && !userForm.getPassword().isEmpty()) {
+            userForm.setPassword(bCryptPasswordEncoder.encode(userForm.getPassword()));
+        }
+        userForm.setRoles(roles);
+        userRepository.save(userForm);
     }
 
     public void setUserRole(User user, Role role) {
