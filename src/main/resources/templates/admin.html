@@ -138,7 +138,7 @@
                 <div class="mb-3">
                     <label for="username" class="form-label">Username:</label>
                     <input type="text" class="form-control" id="username" name="username" required>
-                    <div style="color: red" th:if="${usernameError != null}" th:text="${usernameError}"></div>
+                    <div style="color: red" th:if="${error != null}" th:text="${error}"></div>
 
                 </div>
                 <div class="mb-3">
@@ -148,7 +148,7 @@
                 <div class="mb-3">
                     <label for="confirmPassword" class="form-label">Confirm password:</label>
                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-                    <div style="color: red" th:if="${passwordError != null}" th:text="${passwordError}"></div>
+                    <div style="color: red" th:if="${error != null}" th:text="${error}"></div>
                 </div>
 
                 <div class="mb-3">

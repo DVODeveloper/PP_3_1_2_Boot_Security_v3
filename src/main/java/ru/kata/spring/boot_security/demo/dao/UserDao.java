@@ -1,4 +1,4 @@
-package ru.kata.spring.boot_security.demo.service;
+package ru.kata.spring.boot_security.demo.dao;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -7,7 +7,7 @@ import ru.kata.spring.boot_security.demo.entity.User;
 
 import java.util.List;
 
-public interface UserService {
+public interface UserDao {
 
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
@@ -24,4 +24,6 @@ public interface UserService {
     void updateUser(User userForm);
 
     List<Role> findAllRoles();
+
+
 }
