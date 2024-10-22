@@ -52,21 +52,21 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean saveUser(User user) {
-        User userFromDb = userRepository.findByUsername(user.getUsername());
-
-        if (userFromDb != null) {
+        if (userRepository.findByUsername(user.getUsername()) != null) {
             return false;
         }
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 
         Set<Role> roles = new HashSet<>();
         for (Role roleId : user.getRoles()) {
             Role dbRole = roleRepository.findById(roleId.getId()).orElse(null);
             if (dbRole != null) {
                 roles.add(dbRole);
+            } else {
+                throw new IllegalArgumentException("Role " + roleId.getName() + " not found");
             }
         }
         user.setRoles(roles);
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));  // Шифруем пароль
         userRepository.save(user);
 
         return true;
