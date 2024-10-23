@@ -20,6 +20,10 @@
   <input type="password" id="password" th:field="*{password}"/>
   <br/>
 
+  <label for="passwordConfirm">Подтвердите пароль:</label>
+  <input type="password" id="passwordConfirm" th:field="*{passwordConfirm}"/>
+  <br/>
+
   <label for="roles">Роли:</label>
   <select id="roles" th:field="*{roles}" multiple="multiple">
     <option th:each="role : ${allRoles}" th:value="${role.id}" th:text="${role.name}"></option>
@@ -30,5 +34,6 @@
 </form>
 <br/>
 <a href="/admin">Назад к списку пользователей</a>
+
 </body>
 </html>
