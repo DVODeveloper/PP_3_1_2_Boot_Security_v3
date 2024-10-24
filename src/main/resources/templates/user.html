@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,9 +47,9 @@
 <body>
 <div class="navbar">
     <div>
-        <span th:text="${user.username}" style="font-weight: bold;"></span>
+        <span id="username" style="font-weight: bold;"></span>
         <span> with roles: </span>
-        <span th:text="${user.roles[0].name}"></span>
+        <span id="roles"></span>
     </div>
     <div>
         <a href="/logout" class="text-white">Logout</a>
@@ -58,8 +58,8 @@
 
 <div class="sidebar">
     <ul class="nav flex-column">
-        <li class="nav-item" th:if="${roles.contains('ROLE_ADMIN')}">
-            <a href="/admin" class="nav-link" th:classappend="${roles.contains('ROLE_ADMIN')} ? 'active' : ''">Admin</a>
+        <li class="nav-item">
+            <a href="/admin" class="nav-link" id="adminLink">Admin</a>
         </li>
         <li class="nav-item">
             <a href="/user" class="nav-link active">User</a>
@@ -68,7 +68,7 @@
 </div>
 
 <div class="content">
-    <h1>User information-page</h1>
+    <h1>User Information Page</h1>
     <h3>About user</h3>
     <table class="table table-bordered">
         <thead>
@@ -80,14 +80,48 @@
         </thead>
         <tbody>
         <tr>
-            <td th:text="${user.id}"></td>
-            <td th:text="${user.username}"></td>
-            <td th:text="${user.roles[0].name}"></td>
+            <td id="userId"></td>
+            <td id="usrName"></td>
+            <td id="userRoles"></td>
         </tr>
         </tbody>
     </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const apiUrl = `/api/users/me`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Пользователь не найден или не авторизован');
+                }
+                return response.json();
+            })
+            .then(user => {
+                document.getElementById('userId').textContent = user.id;
+                document.getElementById('usrName').textContent = user.username;
+                document.getElementById('userRoles').textContent = user.roles.map(role => role.name).join(', ');
+                document.getElementById('usrName').textContent = user.username;
+                document.getElementById('roles').textContent = user.roles.map(role => role.name).join(', ');
+
+                if (user.roles.some(role => role.name === 'ROLE_ADMIN')) {
+                    document.getElementById('adminLink').style.display = 'block';
+                } else {
+                    document.getElementById('adminLink').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при получении данных пользователя:', error);
+                alert('Не удалось загрузить данные пользователя. Пожалуйста, убедитесь, что вы авторизованы.');
+            });
+    });
+
+
+</script>
 </body>
 </html>
